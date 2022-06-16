@@ -8,6 +8,7 @@
 import subprocess
 import re
 import sys
+import time
 
 # Parse arguments
 # ==============
@@ -189,6 +190,9 @@ for id in list_id:
 		wmctrl(id, [['-b', 'toggle,' + s] for s in state])
 		wmctrl(id, [['-e', '0,%d,%d,%d,%d' % tuple(npos+nsiz)]])
 		wmctrl(id, [['-b', 'toggle,' + s] for s in state])
+
+        # Some oddness happens without a delay, so adding a quick delay seems to fix it
+		time.sleep(0.05)
 
 		if dir == 'maximize':
 			wmctrl(id, [['-b', 'add,maximized_horz,maximized_vert']])
