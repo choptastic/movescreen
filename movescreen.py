@@ -16,7 +16,7 @@ if 1 < len(sys.argv) and sys.argv[1] == '-r':
 	ratio = True
 	del sys.argv[1]
 
-dir_str = [ "left", "right", "up", "down", "next", "prev", "fit" ]
+dir_str = [ "left", "right", "up", "down", "next", "prev", "fit", "maximize", "max_horz",  "max_vert", "dock_right", "dock_left" ]
 if len(sys.argv) < 2 or sys.argv[1] not in dir_str:
 	print("usage: %s [-r] <%s> [active|a] [mouse|m] [win_id]" % (sys.argv[0], '|'.join(dir_str)))
 	exit(1)
@@ -81,6 +81,11 @@ for ia, sa in enumerate(scr):
 	r["next"][ia] = (ia + 1) % len(scr)
 	r["prev"][ia] = (ia - 1) % len(scr)
 	r["fit"][ia] = ia
+	r["maximize"][ia] = ia
+	r["max_horz"][ia] = ia
+	r["max_vert"][ia] = ia
+	r["dock_right"][ia] = ia
+	r["dock_left"][ia] = ia
 
 
 for id in list_id:
@@ -137,10 +142,23 @@ for id in list_id:
 
 	#print scr, npos, nsiz
 
-	if dir == 'fit':
+	#print(dir)
+
+	if dir in ['fit', 'maximize', 'max_vert', 'max_horz']:
 		# ... reduce/move window so it fits totally in the screen (taking border into account)
 		nsiz = [ min(nsiz[0], nscr[0] - 2*geo[4]), min(nsiz[1], nscr[1] - geo[4] - geo[5]) ]
 		npos[0] = min(max(npos[0], nscr[2]), nscr[2] + nscr[0] - nsiz[0] - geo[4] - geo[4])
+		npos[1] = min(max(npos[1], nscr[3]), nscr[3] + nscr[1] - nsiz[1] - geo[5] - geo[4])
+	elif dir in ['dock_left', 'dock_right']:
+		print(geo)
+		print(nscr)
+		print(nsiz)
+		print(npos)
+		nsiz = [ nscr[0]/2, min(nsiz[1], nscr[1] - geo[4] - geo[5]) ]
+		if dir == 'dock_left':
+			npos[0] = nscr[2]
+		elif dir == 'dock_right':
+			npos[0] = nscr[2] + nscr[0]/2
 		npos[1] = min(max(npos[1], nscr[3]), nscr[3] + nscr[1] - nsiz[1] - geo[5] - geo[4])
 	else:
 		if ratio:
@@ -164,10 +182,19 @@ for id in list_id:
 		def wmctrl(id, ops):
 			for op in ops:
 				cmd = ['wmctrl', '-i', '-r', id ] + op
+				print(cmd)
 				subprocess.call(cmd)
 
 		# wmctrl very pernickety with -b argument, 'add' not really working and 2 props max
 		wmctrl(id, [['-b', 'toggle,' + s] for s in state])
 		wmctrl(id, [['-e', '0,%d,%d,%d,%d' % tuple(npos+nsiz)]])
 		wmctrl(id, [['-b', 'toggle,' + s] for s in state])
+
+		if dir == 'maximize':
+			wmctrl(id, [['-b', 'add,maximized_horz,maximized_vert']])
+		elif dir in ['max_vert', 'dock_right', 'dock_left']:
+			wmctrl(id, [['-b', 'add,maximized_vert']])
+		elif dir in ['max_horz', 'dock_bot', 'dock_top']:
+			wmctrl(id, [['-b', 'add,maximized_horz']])
+
 
