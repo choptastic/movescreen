@@ -159,7 +159,7 @@ for id in list_id:
 		if dir == 'dock_left':
 			npos[0] = nscr[2]
 		elif dir == 'dock_right':
-			npos[0] = nscr[2] + nscr[0]/2
+			npos[0] = nscr[2] + nscr[0]/2 - 2
 		npos[1] = min(max(npos[1], nscr[3]), nscr[3] + nscr[1] - nsiz[1] - geo[5] - geo[4])
 	else:
 		if ratio:
@@ -185,20 +185,31 @@ for id in list_id:
 				cmd = ['wmctrl', '-i', '-r', id ] + op
 				print(cmd)
 				subprocess.call(cmd)
+				time.sleep(0.05)
+
+		#print(state)
+
+		doing_max = dir in ['maximize','max_vert','max_horz','dock_right','dock_left','dock_top','dock_bot']
+		is_max_horz = 'maximize_horz' in state
+		is_max_vert = 'maximize_vert' in state
 
 		# wmctrl very pernickety with -b argument, 'add' not really working and 2 props max
-		wmctrl(id, [['-b', 'toggle,' + s] for s in state])
+
+		wmctrl(id, [['-b', 'remove,' + s] for s in state])
+
 		wmctrl(id, [['-e', '0,%d,%d,%d,%d' % tuple(npos+nsiz)]])
-		wmctrl(id, [['-b', 'toggle,' + s] for s in state])
 
-        # Some oddness happens without a delay, so adding a quick delay seems to fix it
-		time.sleep(0.05)
+		if doing_max:
+			if dir == 'maximize':
+				wmctrl(id, [['-b', 'add,maximized_horz,maximized_vert']])
+			elif dir in ['max_vert', 'dock_right', 'dock_left']:
+				wmctrl(id, [['-b', 'add,maximized_vert']])
+			elif dir in ['max_horz', 'dock_bot', 'dock_top']:
+				wmctrl(id, [['-b', 'add,maximized_horz']])
+		else:
+			wmctrl(id, [['-b', 'add,' + s] for s in state])
 
-		if dir == 'maximize':
-			wmctrl(id, [['-b', 'add,maximized_horz,maximized_vert']])
-		elif dir in ['max_vert', 'dock_right', 'dock_left']:
-			wmctrl(id, [['-b', 'add,maximized_vert']])
-		elif dir in ['max_horz', 'dock_bot', 'dock_top']:
-			wmctrl(id, [['-b', 'add,maximized_horz']])
+		#if dir in ["left", "right", "up", "down", "next", "prev"]:
+		#	time.sleep(0.5)
 
 
